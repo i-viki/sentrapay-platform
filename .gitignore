@@ -1,0 +1,80 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.class
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle
+build/
+
+# Node & Frontend
+node_modules/
+dist/
+.npm
+.vite/
+
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# ML Artifacts (Temporary / checkpoints)
+*.checkpoint
+checkpoints/
+
+# Environments & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+
+# IDEs & System
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Docker volumes & local data
+data/
+pgdata/
+redisdata/
+kafkadata/
+
+# Local scratches & notes
+scratch/
+

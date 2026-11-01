@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package dev.jayavignesh.sentrapay.fraud;
+
+option java_multiple_files = true;
+option java_package = "dev.jayavignesh.sentrapay.fraud.grpc";
+option java_outer_classname = "FraudServiceProto";
+
+service FraudInferenceService {
+  rpc EvaluatePaymentRisk (PaymentRiskRequest) returns (PaymentRiskResponse);
+  rpc HealthCheck (HealthRequest) returns (HealthResponse);
+}
+
+message PaymentRiskRequest {
+  string transaction_id = 1;
+  int64 sender_id = 2;
+  int64 recipient_id = 3;
+  double amount = 4;
+  string payment_channel = 5;       // "UPI", "WALLET_TRANSFER", "NEFT"
+  int32 velocity_last_1min = 6;      // Transaction count in last 60s
+  int32 velocity_last_1hour = 7;     // Transaction count in last 60m
+  double user_avg_amount_30d = 8;    // Historical 30-day baseline average
+  int32 hour_of_day = 9;             // 0 - 23
+  string device_ip = 10;
+  bool is_new_recipient = 11;
+}
+
+message PaymentRiskResponse {
+  string transaction_id = 1;
+  double fraud_probability = 2;     // 0.000 to 1.000
+  string risk_tier = 3;             // "LOW", "MEDIUM", "HIGH"
+  string action = 4;                // "APPROVE", "MANUAL_REVIEW", "REJECT"
+  int64 inference_time_nanos = 5;
+  repeated string flagged_indicators = 6;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;                // "SERVING"
+}
+
