@@ -1,0 +1,9 @@
+# GitHub Linguist overrides
+# Suppress frontend JS/TS from language stats so Java is correctly recognized as the primary language
+frontend/** linguist-documentation
+frontend/dist/** linguist-vendored
+*.js linguist-detectable=false
+*.jsx linguist-detectable=false
+*.ts linguist-detectable=false
+*.tsx linguist-detectable=false
+proto/** linguist-detectable=true
