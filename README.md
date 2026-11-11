@@ -32,7 +32,7 @@ An enterprise-grade, **event-driven real-time payment switch, AI fraud scoring e
 - **Cryptographic Tamper-Evident Audit Trail (`services/reconciliation-service`):**
   Every journal entry is sealed in an immutable forward-chained block using SHA-256 cryptographic hashing ($H_n = \text{SHA-256}(H_{n-1} \parallel \text{EntryData})$).
 - **Multi-Tier Fuzzy UTR Matching & Fee Tolerance (`services/reconciliation-service`):**
-  Spring Batch 5 reconciliation engine with Damerau-Levenshtein distance (typo and transposition tolerance $\le 2$) and banking merchant fee tolerance (MDR $\le 2.5\%$).
+  Spring Batch 5 reconciliation engine with Damerau-Levenshtein distance (typo and transposition tolerance ≤ 2) and banking merchant fee tolerance (MDR ≤ 2.5%).
 - **Beneficiary Anti-Takeover Cooling-Off Guardrails (`services/wallet-service`):**
   Newly linked payees enter a strict 24-hour security cooling-off window capped at INR 5,000 to prevent automated drain attacks.
 - **P2P Collect Requests Protocol ("UPI Collect") (`services/wallet-service`):**
@@ -194,10 +194,10 @@ $$H_n = \text{SHA-256}(H_{n-1} \parallel \text{TxId} \parallel \text{Amount} \pa
 
 | Account | Entry Type | Invariant Constraint | Failure Action |
 | :--- | :---: | :--- | :--- |
-| **`USER_WALLET`** | `DEBIT` | Available Balance $\ge$ Transfer Amount | Immediate rejection (`INSUFFICIENT_FUNDS`) |
+| **`USER_WALLET`** | `DEBIT` | Available Balance ≥ Transfer Amount | Immediate rejection (`INSUFFICIENT_FUNDS`) |
 | **`ESCROW_HOLD`** | `CREDIT` | Balance held atomically during Saga lifecycle | Compensating unlock on fraud trigger |
 | **`SETTLEMENT_CLEARING`** | `DEBIT / CREDIT` | Must match external banking settlement report | Flagged for manual audit in Spring Batch |
-| **`PLATFORM_FEE`** | `CREDIT` | Contractual fee percentage (MDR $\le 2.5\%$) | Recorded in institutional revenue account |
+| **`PLATFORM_FEE`** | `CREDIT` | Contractual fee percentage (MDR ≤ 2.5%) | Recorded in institutional revenue account |
 
 ### Pre-Seeded Test Accounts
 
