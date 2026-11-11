@@ -48,50 +48,50 @@ An enterprise-grade, **event-driven real-time payment switch, AI fraud scoring e
 flowchart TB
     subgraph CLIENT["Client & Edge Gateway Tier"]
         UI["React 18 + Tailwind Dashboard<br/>Port: 8080 (via Nginx)"]
-        EDGE["Nginx Reverse Proxy & SSE Gateway<br/>Port: 8080<br/>• Static Delivery • SSL Termination • SSE Buffering Disabled"]
-        UI <-->|HTTP / Unbuffered SSE| EDGE
+        EDGE["Nginx Reverse Proxy & SSE Gateway<br/>Port: 8080<br/>- Static Delivery - SSL Termination - SSE Buffering Disabled"]
+        UI <-->|"HTTP / Unbuffered SSE"| EDGE
     end
 
     subgraph MESH["Microservices Core Mesh (Java 21 / Spring Boot 3.3)"]
-        WALLET["Wallet Service<br/>Port: 8081<br/>• Balances & Holds<br/>• Redis SETNX Idempotency<br/>• Beneficiary 24h Cooling-Off"]
-        FRAUD["Fraud Detection Service<br/>Port: 8082<br/>• Sliding-Window Velocity (ZSET)<br/>• gRPC Protobuf Client<br/>• Saga Decision Verdicts"]
-        RECON["Reconciliation & Ledger Service<br/>Port: 8083<br/>• Zero-Sum Journal Entries<br/>• SHA-256 Cryptographic Audit Chain<br/>• Spring Batch 5 Fuzzy UTR Matcher"]
-        NOTIF["Notification Service<br/>Port: 8084<br/>• Reactive Spring WebFlux<br/>• Non-blocking SSE Broadcaster"]
+        WALLET["Wallet Service<br/>Port: 8081<br/>- Balances & Holds<br/>- Redis SETNX Idempotency<br/>- Beneficiary 24h Cooling-Off"]
+        FRAUD["Fraud Detection Service<br/>Port: 8082<br/>- Sliding-Window Velocity ZSET<br/>- gRPC Protobuf Client<br/>- Saga Decision Verdicts"]
+        RECON["Reconciliation & Ledger Service<br/>Port: 8083<br/>- Zero-Sum Journal Entries<br/>- SHA-256 Cryptographic Audit Chain<br/>- Spring Batch 5 Fuzzy UTR Matcher"]
+        NOTIF["Notification Service<br/>Port: 8084<br/>- Reactive Spring WebFlux<br/>- Non-blocking SSE Broadcaster"]
     end
 
     subgraph SIDECAR["ML Inference Engine (Python 3.11 / LightGBM)"]
-        ML["LightGBM Fraud Sidecar<br/>Ports: 8000 (REST) / 50051 (gRPC)<br/>• 1.4ms Vectorized NumPy Inference<br/>• Dynamic Feature Attribution"]
+        ML["LightGBM Fraud Sidecar<br/>Ports: 8000 REST / 50051 gRPC<br/>- 1.4ms Vectorized NumPy Inference<br/>- Dynamic Feature Attribution"]
     end
 
     subgraph EVENT_STREAM["Asynchronous Event Mesh (Apache Kafka KRaft)"]
-        KAFKA["Kafka Cluster (KRaft Mode)<br/>Port: 9092<br/>• Topic: payments.initiated<br/>• Topic: payments.fraud-scored<br/>• Topic: payments.settled<br/>• Topic: payments.compensated"]
+        KAFKA["Kafka Cluster KRaft Mode<br/>Port: 9092<br/>- Topic: payments.initiated<br/>- Topic: payments.fraud-scored<br/>- Topic: payments.settled<br/>- Topic: payments.compensated"]
     end
 
     subgraph STORAGE["Persistence & Cache Infrastructure (Docker)"]
-        PG[("PostgreSQL 16 Enterprise<br/>Port: 5432<br/>• DB: sentrapay_wallet<br/>• DB: sentrapay_recon<br/>• tables: wallets, holds, ledger_entries, audit_chain")]
-        REDIS[("Redis 7.2 High-Performance Cache<br/>Port: 6379<br/>• Idempotency Keys (24h TTL)<br/>• ZSET Velocity Sliding-Windows")]
+        PG[("PostgreSQL 16 Enterprise<br/>Port: 5432<br/>- DB: sentrapay_wallet<br/>- DB: sentrapay_recon<br/>- tables: wallets, holds, ledger_entries, audit_chain")]
+        REDIS[("Redis 7.2 High-Performance Cache<br/>Port: 6379<br/>- Idempotency Keys 24h TTL<br/>- ZSET Velocity Sliding-Windows")]
     end
 
-    EDGE -->|Route /api/v1/wallets| WALLET
-    EDGE -->|Route /api/v1/fraud| FRAUD
-    EDGE -->|Route /api/v1/recon| RECON
-    EDGE -->|Route /api/events/stream| NOTIF
+    EDGE -->|"Route /api/v1/wallets"| WALLET
+    EDGE -->|"Route /api/v1/fraud"| FRAUD
+    EDGE -->|"Route /api/v1/recon"| RECON
+    EDGE -->|"Route /api/events/stream"| NOTIF
 
-    WALLET <-->|Idempotency & Holds| REDIS
-    WALLET <-->|Balance Records| PG
-    WALLET -->|Publish payments.initiated| KAFKA
+    WALLET <-->|"Idempotency & Holds"| REDIS
+    WALLET <-->|"Balance Records"| PG
+    WALLET -->|"Publish payments.initiated"| KAFKA
 
-    KAFKA -->|Consume payments.initiated| FRAUD
-    FRAUD <-->|Velocity Check (ZSET)| REDIS
-    FRAUD <-->|gRPC Binary Protobuf (:50051)| ML
-    FRAUD -->|Publish payments.fraud-scored| KAFKA
+    KAFKA -->|"Consume payments.initiated"| FRAUD
+    FRAUD <-->|"Velocity Check via ZSET"| REDIS
+    FRAUD <-->|"gRPC Binary Protobuf :50051"| ML
+    FRAUD -->|"Publish payments.fraud-scored"| KAFKA
 
-    KAFKA -->|Consume Decision| WALLET
-    WALLET -->|Publish payments.settled| KAFKA
+    KAFKA -->|"Consume Decision"| WALLET
+    WALLET -->|"Publish payments.settled"| KAFKA
 
-    KAFKA -->|Consume Settlement| RECON
-    KAFKA -->|Consume Events| NOTIF
-    RECON <-->|Post Double-Entry Ledgers & Merkle Chain| PG
+    KAFKA -->|"Consume Settlement"| RECON
+    KAFKA -->|"Consume Events"| NOTIF
+    RECON <-->|"Post Double-Entry Ledgers"| PG
 ```
 
 ### End-to-End Saga Transaction Lifecycle
@@ -113,39 +113,31 @@ sequenceDiagram
     Payer->>GW: POST /api/payments/transfer (Idempotency-Key: idemp-uuid)
     GW->>WS: Forward Request
 
-    rect rgb(20, 25, 35)
-        Note over WS,R: Stage 1 & 2: Idempotency Verification & Balance Reservation
-        WS->>R: SETNX idempotency:idemp-uuid (24h TTL)
-        WS->>DB: Check (balance - active_holds >= amount) & Insert balance_holds row
-        WS->>K: Emit Event: payments.initiated
-        WS-->>GW: HTTP 202 Accepted (Transaction In-Flight)
-        GW-->>Payer: 202 Accepted
-    end
+    Note over WS,R: Stage 1 & 2: Idempotency Verification & Balance Reservation
+    WS->>R: SETNX idempotency:idemp-uuid (24h TTL)
+    WS->>DB: Check available balance and insert balance_holds record
+    WS->>K: Emit Event: payments.initiated
+    WS-->>GW: HTTP 202 Accepted (Transaction In-Flight)
+    GW-->>Payer: 202 Accepted
 
-    rect rgb(25, 20, 30)
-        Note over K,ML: Stage 3 & 4: Dual-Tier Fraud & Risk Assessment
-        K->>FS: Consume payments.initiated
-        FS->>R: ZADD & ZCOUNT sliding-window velocity (burst > 4 ops / 60s)
-        FS->>ML: gRPC EvaluatePaymentRisk(TxVector)
-        ML-->>FS: FraudProbability: 0.012 (Tier: LOW, Action: APPROVE) in 1.4ms
-        FS->>K: Emit Event: payments.fraud-scored
-    end
+    Note over K,ML: Stage 3 & 4: Dual-Tier Fraud & Risk Assessment
+    K->>FS: Consume payments.initiated
+    FS->>R: ZADD & ZCOUNT sliding-window velocity (burst exceeds 4 ops / 60s)
+    FS->>ML: gRPC EvaluatePaymentRisk(TxVector)
+    ML-->>FS: FraudProbability: 0.012 (Tier: LOW, Action: APPROVE) in 1.4ms
+    FS->>K: Emit Event: payments.fraud-scored
 
-    rect rgb(20, 30, 25)
-        Note over K,DB: Stage 5 & 6: Dual Settlement, Zero-Sum Ledger & Audit Chain
-        K->>WS: Consume payments.fraud-scored
-        WS->>DB: Release hold & transfer balance atomically
-        K->>RS: Consume payments.fraud-scored
-        RS->>DB: Post Balanced Double-Entry Journal Legs (Debits == Credits)
-        RS->>DB: Seal SHA-256 Cryptographic Audit Block
-    end
+    Note over K,DB: Stage 5 & 6: Dual Settlement, Zero-Sum Ledger & Audit Chain
+    K->>WS: Consume payments.fraud-scored
+    WS->>DB: Release hold & transfer balance atomically
+    K->>RS: Consume payments.fraud-scored
+    RS->>DB: Post Balanced Double-Entry Journal Legs (Debits equal Credits)
+    RS->>DB: Seal SHA-256 Cryptographic Audit Block
 
-    rect rgb(25, 25, 30)
-        Note over K,Payer: Stage 7: Real-Time SSE Stream Broadcast
-        K->>NS: Consume payments.settled
-        NS-->>GW: Server-Sent Event: PAYMENT_SETTLED
-        GW-->>Payer: Live UI Update (under 5ms)
-    end
+    Note over K,Payer: Stage 7: Real-Time SSE Stream Broadcast
+    K->>NS: Consume payments.settled
+    NS-->>GW: Server-Sent Event: PAYMENT_SETTLED
+    GW-->>Payer: Live UI Update (under 5ms)
 ```
 
 ### Monorepo Structure
